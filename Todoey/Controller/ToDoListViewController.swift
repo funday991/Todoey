@@ -16,8 +16,9 @@ class ToDoListViewController: UITableViewController {
     
     var itemArray = [ToDoItem]()
     
-    let defaults = UserDefaults.standard
-    
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?
+        .appendingPathComponent("ToDoItems.plist")
+
     /************************************************************************************************************************************/
     // MARK: - Lifecycle
     /************************************************************************************************************************************/
@@ -25,9 +26,7 @@ class ToDoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if let items = defaults.array(forKey: "ToDoListArray") as? [ToDoItem] {
-            itemArray = items
-        }
+        loadItems()
     }
     
     
@@ -58,8 +57,9 @@ class ToDoListViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
-        tableView.reloadData()
-        
+
+        self.saveItems()
+
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
@@ -77,9 +77,7 @@ class ToDoListViewController: UITableViewController {
             
             self.itemArray.append(ToDoItem(title: textField.text!))
             
-            self.defaults.set(self.itemArray, forKey: "ToDoListArray")
-            
-            self.tableView.reloadData()
+            self.saveItems()
         }
         
         alert.addTextField { (alertTextField) in
@@ -90,6 +88,35 @@ class ToDoListViewController: UITableViewController {
         alert.addAction(action)
         
         present(alert, animated: true, completion: nil)
+    }
+    
+    /************************************************************************************************************************************/
+    // MARK: - Model Manipulation Methods
+    /************************************************************************************************************************************/
+    
+    func saveItems() {
+        let encoder = PropertyListEncoder()
+        
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        } catch {
+            print("Error encoding item array, \(error)")
+        }
+        
+        tableView.reloadData()
+    }
+    
+    func loadItems() {
+        guard let data = try? Data(contentsOf: dataFilePath!) else { return }
+        
+        let decoder = PropertyListDecoder()
+        
+        do {
+            itemArray = try decoder.decode([ToDoItem].self, from: data)
+        } catch {
+            print("Error decoding item array, \(error)")
+        }
     }
     
 }
