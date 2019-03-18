@@ -14,8 +14,9 @@ class ToDoListViewController: UITableViewController {
     // MARK: - Properties
     /************************************************************************************************************************************/
     
-    var itemArray = ["Find Mike", "Buy Eggos", "Destroy Demogorgon"]
+    var itemArray = [String]()
     
+    let defaults = UserDefaults.standard
     
     /************************************************************************************************************************************/
     // MARK: - Lifecycle
@@ -23,6 +24,10 @@ class ToDoListViewController: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if let items = defaults.array(forKey: "ToDoListArray") as? [String] {
+            itemArray = items
+        }
     }
     
     
@@ -69,6 +74,8 @@ class ToDoListViewController: UITableViewController {
             guard textField.text! != "" else { return }
             
             self.itemArray.append(textField.text!)
+            
+            self.defaults.set(self.itemArray, forKey: "ToDoListArray")
             
             self.tableView.reloadData()
         }
